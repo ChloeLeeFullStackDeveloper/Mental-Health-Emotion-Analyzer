@@ -1,5 +1,14 @@
+# Python bytecode
 __pycache__/
-*.pkl
+*.py[cod]
+
+# Virtual environment
 env/
-.history.json
+
+# Jupyter checkpoint files
+.ipynb_checkpoints/
+
+# Sensitive or runtime files
+history.json
 *.log
+.env

@@ -45,27 +45,21 @@
   <h2>Journal Entry</h2>
 
   <textarea id="journalText" rows="5" placeholder="Type how you feel..."></textarea>
-
   <label for="threshold">Threshold (0–1):</label>
   <input type="text" id="threshold" value="0.3" />
-
   <button id="analyzeBtn">Analyze Emotion</button>
 
   <h3>Predicted Emotions:</h3>
   <canvas id="emotionChart" width="600" height="300"></canvas>
   <div id="result">Awaiting input...</div>
 
+  <h4>📊 Emotion Summary</h4>
+  <div id="summaryBox">Loading summary...</div>
   <hr />
 
   <label for="emotionFilter">Filter by Emotion:</label>
   <select id="emotionFilter" onchange="loadHistory()">
     <option value="">-- All Emotions --</option>
-    <option value="joy">joy</option>
-    <option value="sadness">sadness</option>
-    <option value="anger">anger</option>
-    <option value="fear">fear</option>
-    <option value="surprise">surprise</option>
-    <option value="disgust">disgust</option>
   </select>
 
   <label for="startDate">Start Date:</label>
@@ -74,7 +68,7 @@
   <label for="endDate">End Date:</label>
   <input type="date" id="endDate" onchange="loadHistory()" />
 
-  <button onclick="clearHistory()">🧹 Clear History</button>
+  <button onclick="clearHistory()">🪑 Clear History</button>
   <button onclick="downloadCSV()">📁 Export to CSV</button>
 
   <h3>Past Journal Entries</h3>
@@ -82,56 +76,79 @@
 
   <script>
     let emotionChart;
+    let expanded = false;
+
+    function toggleHistoryVisibility() {
+      const extraEntries = document.querySelectorAll(".history-entry.extra");
+      extraEntries.forEach(div => {
+        div.style.display = expanded ? "none" : "block";
+      });
+
+      const btn = document.getElementById("toggleHistoryBtn");
+      btn.textContent = expanded ? "Show More" : "Show Less";
+      expanded = !expanded;
+    }
 
     async function loadHistory() {
       const container = document.getElementById("historyContainer");
       const selectedEmotion = document.getElementById("emotionFilter").value;
-      const startDate = new Date(document.getElementById("startDate").value);
-      const endDate = new Date(document.getElementById("endDate").value);
+      const startDateInput = document.getElementById("startDate").value;
+      const endDateInput = document.getElementById("endDate").value;
+
+      const startDate = startDateInput ? new Date(startDateInput) : null;
+      const endDate = endDateInput ? new Date(endDateInput) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
 
       try {
         const response = await fetch("/history");
         const history = await response.json();
 
         const filtered = history.filter(entry => {
-          const hasEmotion = !selectedEmotion || (entry.predictions && Object.keys(entry.predictions).includes(selectedEmotion));
+          const hasEmotion = !selectedEmotion || (entry.predictions && entry.predictions[selectedEmotion] !== undefined);
           const entryDate = new Date(entry.timestamp);
-          const inRange =
-            (!isNaN(startDate) ? entryDate >= startDate : true) &&
-            (!isNaN(endDate) ? entryDate <= endDate : true);
+          const inRange = (!startDate || entryDate >= startDate) && (!endDate || entryDate <= endDate);
           return hasEmotion && inRange;
         });
 
+        container.innerHTML = "";
         if (filtered.length === 0) {
-          container.innerHTML = `<p>No entries found.</p>`;
+          container.innerHTML = `<p>🤭 No entries matched the filters.</p>`;
           return;
         }
 
-        container.innerHTML = "";
-        filtered.reverse().forEach(entry => {
+        filtered.reverse().forEach((entry, index) => {
           const div = document.createElement("div");
           div.className = "history-entry";
 
           const ts = new Date(entry.timestamp).toLocaleString();
-          const summary = `
-            <p><strong>${ts}</strong></p>
-            <p><em>${entry.text}</em></p>
-            <p><strong>Threshold:</strong> ${entry.threshold}</p>
-          `;
+          let html = `<p><strong>${ts}</strong></p><p><em>${entry.text}</em></p><p><strong>Threshold:</strong> ${entry.threshold}</p>`;
 
-          let emotions = "<p><strong>Emotions:</strong><br/>";
-          if (Object.keys(entry.predictions).length === 0) {
-            emotions += "None above threshold.";
+          html += "<p><strong>Emotions:</strong><br/>";
+          if (!entry.predictions || Object.keys(entry.predictions).length === 0) {
+            html += "None above threshold.";
           } else {
             for (const [label, score] of Object.entries(entry.predictions)) {
-              emotions += `${label}: ${(score * 100).toFixed(1)}%<br/>`;
+              html += `${label}: ${(score * 100).toFixed(1)}%<br/>`;
             }
           }
-          emotions += "</p>";
+          html += "</p>";
 
-          div.innerHTML = summary + emotions;
+          div.innerHTML = html;
+          if (index >= 3) {
+            div.classList.add("extra");
+            div.style.display = "none";
+          }
           container.appendChild(div);
         });
+
+        if (filtered.length > 3) {
+          const toggleBtn = document.createElement("button");
+          toggleBtn.id = "toggleHistoryBtn";
+          toggleBtn.textContent = "Show More";
+          toggleBtn.style.marginTop = "10px";
+          toggleBtn.onclick = toggleHistoryVisibility;
+          container.appendChild(toggleBtn);
+        }
 
       } catch (err) {
         container.innerHTML = `<p>Error loading history: ${err.message}</p>`;
@@ -143,42 +160,59 @@
 
       try {
         await fetch("/history", { method: "DELETE" });
-        loadHistory(); // reload UI
+        loadHistory();
+        loadSummary();
       } catch (err) {
         alert("Failed to clear history: " + err.message);
       }
     }
 
+
     async function downloadCSV() {
+      const response = await fetch("/history");
+      const data = await response.json();
+      if (!data.length) return alert("No history to export.");
+
+      const rows = [["Timestamp", "Text", "Threshold", "Emotions"]];
+      data.forEach(entry => {
+        const emotions = Object.entries(entry.predictions || {}).map(([l, s]) => `${l} (${(s * 100).toFixed(1)}%)`).join(", ");
+        rows.push([entry.timestamp, entry.text, entry.threshold, emotions || "None"]);
+      });
+
+      const csv = rows.map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "journal_history.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function loadSummary() {
+      const box = document.getElementById("summaryBox");
       try {
-        const response = await fetch("/history");
-        const data = await response.json();
-        console.log("🔍 Prediction response:", data);
+        const res = await fetch("/summary");
+        const data = await res.json();
+        const dist = data.distribution || {};
 
-        if (!data.length) {
-          alert("No history to export.");
-          return;
+        let html = `<p>🏆 Most frequent emotion: <strong>${data.most_frequent}</strong> (${data.frequency} times)</p><ul>`;
+        const dropdown = document.getElementById("emotionFilter");
+        const added = new Set();
+
+        dropdown.innerHTML = `<option value="">-- All Emotions --</option>`;
+        for (const [label, count] of Object.entries(dist)) {
+          html += `<li>${label}: ${count}</li>`;
+          if (!added.has(label)) {
+            dropdown.innerHTML += `<option value="${label}">${label}</option>`;
+            added.add(label);
+          }
         }
+        html += "</ul>";
+        box.innerHTML = html;
 
-        const rows = [["Timestamp", "Text", "Threshold", "Emotions"]];
-        data.forEach(entry => {
-          const emotions = Object.entries(entry.predictions || {})
-            .map(([label, score]) => `${label} (${(score * 100).toFixed(1)}%)`)
-            .join(", ");
-          rows.push([entry.timestamp, entry.text, entry.threshold, emotions || "None"]);
-        });
-
-        const csvContent = rows.map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "journal_history.csv";
-        a.click();
-        URL.revokeObjectURL(url);
       } catch (err) {
-        alert("Export failed: " + err.message);
+        box.innerHTML = `❌ Failed to load summary: ${err.message}`;
       }
     }
 
@@ -200,22 +234,12 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, threshold })
         });
-
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
         const data = await response.json();
-        console.log("🔍 Prediction response:", data);
-        const emotions = Object.entries(data).filter(([_, val]) => val >= 0.05);
-        emotions.sort((a, b) => b[1] - a[1]);
+        const emotions = Object.entries(data).filter(([_, val]) => val >= 0.05).sort((a, b) => b[1] - a[1]);
 
-        if (emotions.length === 0) {
-          resultContainer.textContent = "🟡 No emotions detected above threshold. Try lowering it.";
-          return;
-        }
+        if (!emotions.length) return resultContainer.textContent = "🟡 No emotions detected above threshold.";
 
         resultContainer.innerHTML = "";
-
-        // 🎯 Draw chart using Chart.js
         const labels = emotions.map(e => e[0]);
         const scores = emotions.map(e => +(e[1] * 100).toFixed(1));
 
@@ -225,28 +249,20 @@
           type: "bar",
           data: {
             labels: labels,
-            datasets: [{
-              label: "Emotion Confidence (%)",
-              data: scores,
-              backgroundColor: "#4caf50"
-            }]
+            datasets: [{ label: "Emotion Confidence (%)", data: scores, backgroundColor: "#4caf50" }]
           },
-          options: {
-            scales: {
-              y: { beginAtZero: true, max: 100 }
-            }
-          }
+          options: { scales: { y: { beginAtZero: true, max: 100 } } }
         });
 
-        // Refresh history
-        loadHistory();
+        await loadSummary();
+        await loadHistory();
 
       } catch (err) {
-        resultContainer.textContent = "❌ Error: " + err.message;
+        resultContainer.textContent = `❌ Error: ${err.message}`;
       }
     });
 
-    // Initial load
+    loadSummary();
     loadHistory();
   </script>
 </body>

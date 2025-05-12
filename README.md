@@ -1,79 +1,104 @@
-# 🧠 Mental Health Emotion Analyzer
+# 🧠 Mental Health Journal Analyzer
 
-This project uses AI to analyze emotion patterns in journal entries. Built with Flask and scikit-learn, it predicts emotional states from text and provides a visual summary of emotional trends.
-
----
-
-## 🔍 Features
-
-- 📝 Journal entry submission
-- 🤖 AI-powered emotion classification using logistic regression
-- 📊 Bar chart visualization of detected emotions
-- 🎯 Customizable confidence threshold (0–1)
-- 🗂️ Emotion filtering (e.g., show only joy-related results)
-- 🕘 History of journal predictions (with timestamps)
+An AI-powered web application that helps users reflect on their mental health by analyzing journal entries and predicting emotional states using NLP models.
 
 ---
 
-## 🧠 Model Overview
+## ✨ Features
 
-- **Vectorizer**: TF-IDF
-- **Model**: Logistic Regression (multi-label)
-- **Training Data**: Emotion-labeled dataset (e.g., [GoEmotions](https://github.com/google-research/goemotions))
-- **Labels**: Multi-label output using `MultiLabelBinarizer`
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: HTML + JavaScript + Chart.js
-- **Backend**: Python (Flask)
-- **ML Tools**: scikit-learn, joblib
+- 🔍 Emotion analysis from free-form journal text
+- 📊 Emotion frequency summary (e.g., joy, sadness, anger)
+- 📁 Export journal history to CSV
+- 📅 Filter past entries by emotion and date
+- 🧠 Hugging Face model: `cardiffnlp/twitter-roberta-base-emotion`
+- ⚙️ Backend powered by Flask + Transformers + Scikit-learn
 
 ---
 
-## 🚀 How to Run Locally
+## 📁 Project Structure
 
-### 1. Clone the repo
+```
+Mental_Health_Journal_Analyzer/
+├── api/                  # Flask API backend
+│   └── app.py
+├── models/               # Emotion classification models
+│   └── predict.py
+├── static/               # Frontend static files
+│   └── index.html
+├── data/                 # CSV and training/test data
+│   └── goemotions.csv
+├── notebooks/            # Jupyter exploration
+│   └── data_exploration.ipynb
+├── utils/                # Visualization and helper scripts
+│   └── visualization.py
+├── history.json          # Emotion prediction history
+├── requirements.txt      # Python dependencies
+├── .gitignore
+└── README.md             # ← You're here
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
 ```bash
-git clone https://github.com/ChloeLeeFullStackDeveloper/Mental-Health-Emotion-Analyzer.git
-cd mental-health-analyzer
+git clone https://github.com/YOUR_USERNAME/Mental_Health_Journal_Analyzer.git
+cd Mental_Health_Journal_Analyzer
+```
 
-2. Set up virtual environment
-bash
-Copy
-Edit
-python3 -m venv env
+### 2. Create and activate a virtual environment
+
+```bash
+python -m venv env
 source env/bin/activate
-3. Install dependencies
-bash
-Copy
-Edit
-pip install -r requirements.txt
-4. Start the server
-bash
-Copy
-Edit
-cd api
-python app.py
-Then visit http://127.0.0.1:5000/ in your browser.
+```
 
-🗂️ File Structure
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
 ```
-mental_health_analyzer/
-│
-├── api/
-│   └── app.py               # Flask backend
-├── models/
-│   ├── predict.py           # Emotion prediction logic
-│   ├── logistic_model.pkl   # Trained model
-│   ├── tfidf_vectorizer.pkl # TF-IDF vectorizer
-│   └── label_binarizer.pkl  # MultiLabelBinarizer
-├── utils/
-│   └── logger.py            # Optional logging
-├── index.html               # Frontend UI
-├── requirements.txt
-└── README.md
+
+### 4. Run the Flask backend
+
+```bash
+python api/app.py
 ```
-📄 License
-MIT License © 2025
+
+### 5. Open `static/index.html` in a browser
+
+No local server needed for frontend – it reads from the backend API.
+
+---
+
+## 🧪 Dependencies
+
+See `requirements.txt`. Key libraries include:
+- Flask
+- transformers
+- torch
+- scikit-learn
+- pandas
+- matplotlib
+
+---
+
+## 📌 Notes
+
+- This app works entirely on localhost.
+- User entries are saved locally to `history.json`.
+- No external tracking or cloud storage is used (privacy-focused).
+
+---
+
+## 📅 Last Updated
+
+2025-05-12
+
+---
+
+## 📜 License
+
+MIT License. Feel free to adapt and build upon this project.

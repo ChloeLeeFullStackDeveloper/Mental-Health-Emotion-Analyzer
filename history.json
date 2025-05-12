@@ -1,60 +1,59 @@
 [
   {
-    "timestamp": "2025-05-11T22:09:20.775088",
-    "text": "I feel so sad",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:12:02.114156",
-    "text": "Feel so tired",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:42:22.260046",
-    "text": "I feel so passionate",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:46:54.118575",
-    "text": "I feel so ambitious",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:57:31.321909",
-    "text": "I feel curious",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:57:33.007285",
-    "text": "I feel curious",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T22:57:33.838951",
-    "text": "I feel curious",
-    "threshold": 0.3,
-    "predictions": {}
-  },
-  {
-    "timestamp": "2025-05-11T23:01:05.860015",
-    "text": "I feel extremely angry and upset.",
+    "timestamp": "2025-05-12T11:21:36.956302",
+    "text": "I feel happy",
     "threshold": 0.3,
     "predictions": {
-      "disappointment": 0.39701466264432295
+      "joy": 0.8723000288009644
     }
   },
   {
-    "timestamp": "2025-05-11T23:13:00.241723",
-    "text": "I am terrified of failing",
+    "timestamp": "2025-05-12T11:21:41.404817",
+    "text": "I feel sad",
     "threshold": 0.3,
     "predictions": {
-      "anger": 0.7365347743931592
+      "sadness": 0.9850000143051147
+    }
+  },
+  {
+    "timestamp": "2025-05-12T11:21:48.166021",
+    "text": "I feel fraustrate",
+    "threshold": 0.3,
+    "predictions": {
+      "sadness": 0.9624999761581421
+    }
+  },
+  {
+    "timestamp": "2025-05-12T11:21:52.757939",
+    "text": "I feel love",
+    "threshold": 0.3,
+    "predictions": {
+      "joy": 0.6974999904632568
+    }
+  },
+  {
+    "timestamp": "2025-05-12T11:22:04.223634",
+    "text": "I feel Grateful",
+    "threshold": 0.3,
+    "predictions": {
+      "joy": 0.4325000047683716,
+      "optimism": 0.46129998564720154
+    }
+  },
+  {
+    "timestamp": "2025-05-12T11:22:07.888168",
+    "text": "I feel hope",
+    "threshold": 0.3,
+    "predictions": {
+      "optimism": 0.8192999958992004
+    }
+  },
+  {
+    "timestamp": "2025-05-12T11:22:24.998087",
+    "text": "I feel thrilled",
+    "threshold": 0.3,
+    "predictions": {
+      "joy": 0.9358999729156494
     }
   }
 ]

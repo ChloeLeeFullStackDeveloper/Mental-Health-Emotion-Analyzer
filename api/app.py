@@ -53,6 +53,30 @@ def clear_history():
         f.write("[]")
     return jsonify({"status": "cleared"})
 
+@app.route("/summary", methods=["GET"])
+def summary():
+    import json
+    from collections import Counter
+
+    try:
+        with open("history.json", "r") as f:
+            history = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return jsonify({"error": "No history available"}), 400
+
+    counter = Counter()
+    for entry in history:
+        for label in entry.get("predictions", {}):
+            counter[label] += 1
+
+    most_common = counter.most_common(1)[0] if counter else ("none", 0)
+
+    return jsonify({
+        "most_frequent": most_common[0],
+        "frequency": most_common[1],
+        "distribution": counter
+    })
+
 @app.route("/email-report", methods=["POST"])
 def email_report():
     import smtplib
