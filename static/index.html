@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Mental Health Emotion Analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 8px 16px;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      margin-right: 10px;
+    }
+
+    .history-entry {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+    }
+
+    hr {
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Journal Entry</h2>
+
+  <textarea id="journalText" rows="5" placeholder="Type how you feel..."></textarea>
+
+  <label for="threshold">Threshold (0–1):</label>
+  <input type="text" id="threshold" value="0.3" />
+
+  <button id="analyzeBtn">Analyze Emotion</button>
+
+  <h3>Predicted Emotions:</h3>
+  <canvas id="emotionChart" width="600" height="300"></canvas>
+  <div id="result">Awaiting input...</div>
+
+  <hr />
+
+  <label for="emotionFilter">Filter by Emotion:</label>
+  <select id="emotionFilter" onchange="loadHistory()">
+    <option value="">-- All Emotions --</option>
+    <option value="joy">joy</option>
+    <option value="sadness">sadness</option>
+    <option value="anger">anger</option>
+    <option value="fear">fear</option>
+    <option value="surprise">surprise</option>
+    <option value="disgust">disgust</option>
+  </select>
+
+  <label for="startDate">Start Date:</label>
+  <input type="date" id="startDate" onchange="loadHistory()" />
+
+  <label for="endDate">End Date:</label>
+  <input type="date" id="endDate" onchange="loadHistory()" />
+
+  <button onclick="clearHistory()">🧹 Clear History</button>
+  <button onclick="downloadCSV()">📁 Export to CSV</button>
+
+  <h3>Past Journal Entries</h3>
+  <div id="historyContainer">Loading history...</div>
+
+  <script>
+    let emotionChart;
+
+    async function loadHistory() {
+      const container = document.getElementById("historyContainer");
+      const selectedEmotion = document.getElementById("emotionFilter").value;
+      const startDate = new Date(document.getElementById("startDate").value);
+      const endDate = new Date(document.getElementById("endDate").value);
+
+      try {
+        const response = await fetch("/history");
+        const history = await response.json();
+
+        const filtered = history.filter(entry => {
+          const hasEmotion = !selectedEmotion || (entry.predictions && Object.keys(entry.predictions).includes(selectedEmotion));
+          const entryDate = new Date(entry.timestamp);
+          const inRange =
+            (!isNaN(startDate) ? entryDate >= startDate : true) &&
+            (!isNaN(endDate) ? entryDate <= endDate : true);
+          return hasEmotion && inRange;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<p>No entries found.</p>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        filtered.reverse().forEach(entry => {
+          const div = document.createElement("div");
+          div.className = "history-entry";
+
+          const ts = new Date(entry.timestamp).toLocaleString();
+          const summary = `
+            <p><strong>${ts}</strong></p>
+            <p><em>${entry.text}</em></p>
+            <p><strong>Threshold:</strong> ${entry.threshold}</p>
+          `;
+
+          let emotions = "<p><strong>Emotions:</strong><br/>";
+          if (Object.keys(entry.predictions).length === 0) {
+            emotions += "None above threshold.";
+          } else {
+            for (const [label, score] of Object.entries(entry.predictions)) {
+              emotions += `${label}: ${(score * 100).toFixed(1)}%<br/>`;
+            }
+          }
+          emotions += "</p>";
+
+          div.innerHTML = summary + emotions;
+          container.appendChild(div);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<p>Error loading history: ${err.message}</p>`;
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm("Are you sure you want to delete all history?")) return;
+
+      try {
+        await fetch("/history", { method: "DELETE" });
+        loadHistory(); // reload UI
+      } catch (err) {
+        alert("Failed to clear history: " + err.message);
+      }
+    }
+
+    async function downloadCSV() {
+      try {
+        const response = await fetch("/history");
+        const data = await response.json();
+        console.log("🔍 Prediction response:", data);
+
+        if (!data.length) {
+          alert("No history to export.");
+          return;
+        }
+
+        const rows = [["Timestamp", "Text", "Threshold", "Emotions"]];
+        data.forEach(entry => {
+          const emotions = Object.entries(entry.predictions || {})
+            .map(([label, score]) => `${label} (${(score * 100).toFixed(1)}%)`)
+            .join(", ");
+          rows.push([entry.timestamp, entry.text, entry.threshold, emotions || "None"]);
+        });
+
+        const csvContent = rows.map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "journal_history.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Export failed: " + err.message);
+      }
+    }
+
+    document.getElementById("analyzeBtn").addEventListener("click", async () => {
+      const text = document.getElementById("journalText").value.trim();
+      const threshold = parseFloat(document.getElementById("threshold").value) || 0.3;
+      const resultContainer = document.getElementById("result");
+
+      if (!text) {
+        resultContainer.innerHTML = "❗ Please enter a journal entry before analyzing.";
+        return;
+      }
+
+      resultContainer.innerHTML = "⏳ Analyzing...";
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, threshold })
+        });
+
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+        const data = await response.json();
+        console.log("🔍 Prediction response:", data);
+        const emotions = Object.entries(data).filter(([_, val]) => val >= 0.05);
+        emotions.sort((a, b) => b[1] - a[1]);
+
+        if (emotions.length === 0) {
+          resultContainer.textContent = "🟡 No emotions detected above threshold. Try lowering it.";
+          return;
+        }
+
+        resultContainer.innerHTML = "";
+
+        // 🎯 Draw chart using Chart.js
+        const labels = emotions.map(e => e[0]);
+        const scores = emotions.map(e => +(e[1] * 100).toFixed(1));
+
+        if (emotionChart) emotionChart.destroy();
+        const ctx = document.getElementById("emotionChart").getContext("2d");
+        emotionChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Emotion Confidence (%)",
+              data: scores,
+              backgroundColor: "#4caf50"
+            }]
+          },
+          options: {
+            scales: {
+              y: { beginAtZero: true, max: 100 }
+            }
+          }
+        });
+
+        // Refresh history
+        loadHistory();
+
+      } catch (err) {
+        resultContainer.textContent = "❌ Error: " + err.message;
+      }
+    });
+
+    // Initial load
+    loadHistory();
+  </script>
+</body>
+
+</html>

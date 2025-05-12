@@ -1,0 +1,30 @@
+
+---
+
+### 📄 `.gitignore`
+
+```gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Virtual Environments
+env/
+venv/
+
+# Mac system files
+.DS_Store
+
+# Model files
+*.pkl
+*.h5
+
+# VS Code settings
+.vscode/
+__pycache__/
+*.pkl
+*.log

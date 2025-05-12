@@ -1,0 +1,60 @@
+[
+  {
+    "timestamp": "2025-05-11T22:09:20.775088",
+    "text": "I feel so sad",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:12:02.114156",
+    "text": "Feel so tired",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:42:22.260046",
+    "text": "I feel so passionate",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:46:54.118575",
+    "text": "I feel so ambitious",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:57:31.321909",
+    "text": "I feel curious",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:57:33.007285",
+    "text": "I feel curious",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T22:57:33.838951",
+    "text": "I feel curious",
+    "threshold": 0.3,
+    "predictions": {}
+  },
+  {
+    "timestamp": "2025-05-11T23:01:05.860015",
+    "text": "I feel extremely angry and upset.",
+    "threshold": 0.3,
+    "predictions": {
+      "disappointment": 0.39701466264432295
+    }
+  },
+  {
+    "timestamp": "2025-05-11T23:13:00.241723",
+    "text": "I am terrified of failing",
+    "threshold": 0.3,
+    "predictions": {
+      "anger": 0.7365347743931592
+    }
+  }
+]
